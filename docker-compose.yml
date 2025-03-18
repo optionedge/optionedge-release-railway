@@ -1,0 +1,41 @@
+services:
+  engine:
+    image: 'optionedge/engine:1.0.22'
+    restart: always
+    environment:
+      - TZ=Asia/Kolkata
+      - Auth:Domain=https://auth.optionedge.in/oidc
+      - Auth:Audience=https://api.optionedge.in
+      - RuntimeSettings__MessageQueueConnectionString=host=rabbitmq;virtualhost=/;username=guest;password=guest;persistentMessages=false
+      - RuntimeSettings__ConfigDatabaseConnectionString=optionedge_config.db
+      - RuntimeSettings__DataFolder=/app/data
+      - RuntimeSettings__LogFile=system_logs_.txt
+      - RuntimeSettings__MasterContractsFile=master_contracts_{{timestamp}}.json
+    depends_on:
+      - rabbitmq
+    networks:
+      - optionedge
+
+  ui:
+    image: 'optionedge/engine_ui:1.0.22'
+    restart: always
+    environment:
+      - TZ=Asia/Kolkata
+      - NUXT_PUBLIC_API_BASE_URL=https://api.optionedge.in  # ✅ Kept as is
+      - NUXT_PUBLIC_AUTH_ENDPOINT=https://auth.optionedge.in
+      - NUXT_PUBLIC_AUTH_APP_ID=b5qzcaxzeo0a2m7hih09m
+      - NUXT_PUBLIC_MY_OPTIONEDGE_BASE_URL=https://my.optionedge.in
+      - NUXT_PUBLIC_STREAMING_BASE_URL=https://${RAILWAY_PUBLIC_DOMAIN}  # ✅ Removed port, uses dynamic Railway URL
+    depends_on:
+      - engine
+    networks:
+      - optionedge
+
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine
+    restart: always
+    networks:
+      - optionedge
+
+networks:
+  optionedge:
